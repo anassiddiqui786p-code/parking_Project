@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PARK-VOID — Smart Parking Control System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+ 
+:root{
+  --teal:#1ED6A5;
+  --teal-hover:#13b38a;
+  --teal-glow:rgba(30,214,165,0.2);
+  --teal-glow-sm:rgba(30,214,165,0.08);
+  --teal-dim:rgba(30,214,165,0.12);
+  --bg:#001014;
+  --bg2:#001014;
+  --bg3:#001014;
+  --border:#1a1a1a;
+  --border2:#222;
+  --text:#e4e4e4;
+  --sub:#6a6a6a;
+  --sub2:#4a4a4a;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Space Grotesk',sans-serif;
+}
+ 
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--sans);overflow-x:hidden;
+  cursor:crosshair;
+}
+ 
+/* ── GRID BACKGROUND ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(30,214,165,0.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(30,214,165,0.05) 1px,transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;z-index:0;
+}
+ 
+/* ── SCANLINES ── */
+body::after{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events:none;z-index:1;
+  animation:scanroll 8s linear infinite;
+}
+@keyframes scanroll{from{background-position:0 0}to{background-position:0 100%}}
+ 
+/* ── NOISE OVERLAY ── */
+.noise{
+  position:fixed;inset:0;z-index:2;pointer-events:none;
+  opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+ 
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--teal);border-radius:0}
+ 
+/* ══════════════════════════════════
+   NAVBAR
+══════════════════════════════════ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  background:rgba(4,4,4,0.92);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;height:62px;
+}
+ 
+.nav-logo{
+  font-family:var(--mono);font-weight:800;font-size:1.1rem;
+  color:var(--teal);letter-spacing:2px;
+  display:flex;align-items:center;gap:10px;text-decoration:none;
+}
+.nav-logo::before{
+  content:'[P]';font-size:.75rem;color:var(--sub);font-weight:400;letter-spacing:1px;
+}
+ 
+.nav-links{display:flex;align-items:center;gap:2px}
+.nav-link{
+  font-family:var(--mono);font-size:.72rem;font-weight:500;
+  color:var(--sub);letter-spacing:1.5px;text-decoration:none;
+  padding:8px 16px;border:1px solid transparent;
+  transition:.2s;text-transform:uppercase;
+}
+.nav-link:hover{color:var(--teal);border-color:var(--border2)}
+ 
+.nav-cta{
+  font-family:var(--mono);font-size:.72rem;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;
+  padding:9px 20px;
+  background:var(--teal);color:#000;
+  border:1px solid var(--teal);
+  transition:.2s;cursor:pointer;
+}
+.nav-cta:hover{background:var(--teal-hover);border-color:var(--teal-hover);box-shadow:0 0 20px var(--teal-glow)}
+ 
+/* ══════════════════════════════════
+   HERO
+══════════════════════════════════ */
+.hero{
+  min-height:100vh;display:grid;
+  grid-template-columns:1fr 1fr;
+  align-items:center;gap:60px;
+  padding:120px 80px 80px;
+  position:relative;z-index:10;
+}
+ 
+/* corner decorations */
+.hero::before{
+  content:'';position:absolute;top:80px;left:0;
+  width:1px;height:200px;background:linear-gradient(to bottom,transparent,var(--teal),transparent);
+}
+ 
+.hero-left{position:relative}
+ 
+.status-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:.7rem;font-weight:500;
+  letter-spacing:1px;color:var(--teal);
+  border:1px solid var(--border2);
+  padding:6px 14px;
+  margin-bottom:28px;
+  background:var(--teal-dim);
+}
+.status-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--teal);
+  box-shadow:0 0 8px var(--teal);
+  animation:pulse-dot 2s ease infinite;
+}
+@keyframes pulse-dot{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.6;transform:scale(.8)}
+}
+ 
+.hero-h1{
+  font-family:var(--mono);font-weight:800;
+  font-size:clamp(2rem,3.5vw,2.9rem);
+  line-height:1.1;letter-spacing:-1px;
+  color:#fff;margin-bottom:24px;
+}
+ 
+.hero-h1 .flicker{
+  color:var(--teal);display:inline;
+  animation:flicker 4s ease infinite;
+}
+@keyframes flicker{
+  0%,95%,100%{opacity:1}
+  96%{opacity:.3}
+  97%{opacity:1}
+  98%{opacity:.5}
+  99%{opacity:1}
+}
+ 
+.hero-sub{
+  font-family:var(--sans);font-size:1rem;font-weight:400;
+  color:var(--sub);line-height:1.7;max-width:480px;
+  margin-bottom:40px;
+}
+ 
+.hero-cta{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--mono);font-size:.82rem;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;
+  padding:14px 32px;
+  background:transparent;
+  border:1px solid var(--teal);
+  color:var(--teal);
+  transition:.25s;position:relative;overflow:hidden;
+}
+.hero-cta::before{
+  content:'';position:absolute;inset:0;
+  background:var(--teal);transform:translateX(-101%);
+  transition:.3s;z-index:-1;
+}
+.hero-cta:hover{color:#000;box-shadow:0 0 30px var(--teal-glow)}
+.hero-cta:hover::before{transform:translateX(0)}
+ 
+/* ── TERMINAL ── */
+.terminal{
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  font-family:var(--mono);font-size:.82rem;
+  position:relative;overflow:hidden;
+}
+ 
+.term-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:11px 16px;border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,0.02);
+}
+.term-dot{width:10px;height:10px;border-radius:50%}
+.term-dot.r{background:#ff5f57}
+.term-dot.y{background:#febc2e}
+.term-dot.g{background:#28c840}
+.term-title{
+  flex:1;text-align:center;font-size:.65rem;
+  color:var(--sub2);letter-spacing:1px;
+}
+ 
+.term-body{padding:20px 20px 24px;min-height:260px}
+.term-line{
+  display:flex;align-items:flex-start;gap:8px;
+  margin-bottom:10px;opacity:0;
+  animation:term-appear .1s ease forwards;
+}
+.term-prompt{color:var(--teal);flex-shrink:0}
+.term-cmd{color:#888}
+.term-ok{color:var(--teal)}
+.term-warn{color:#febc2e}
+.term-info{color:#888}
+.cursor-blink{
+  display:inline-block;
+  color:var(--teal);
+  animation:blink .8s step-end infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes term-appear{to{opacity:1}}
+ 
+/* ══════════════════════════════════
+   METRICS BAR
+══════════════════════════════════ */
+.metrics{
+  position:relative;z-index:10;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  display:grid;grid-template-columns:repeat(4,1fr);
+}
+ 
+.metric{
+  padding:32px 40px;
+  border-right:1px solid var(--border);
+  position:relative;transition:.2s;
+}
+.metric:last-child{border-right:none}
+.metric:hover{background:var(--teal-glow-sm)}
+.metric::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--teal),transparent);
+  opacity:0;transition:.2s;
+}
+.metric:hover::after{opacity:1}
+ 
+.metric-num{
+  font-family:var(--mono);font-size:2.2rem;font-weight:800;
+  color:var(--teal);letter-spacing:-1px;display:block;
+  margin-bottom:6px;
+}
+.metric-label{
+  font-size:.78rem;color:var(--sub);font-weight:500;
+  letter-spacing:.5px;font-family:var(--mono);
+  text-transform:uppercase;
+}
+ 
+/* ══════════════════════════════════
+   SECTION COMMONS
+══════════════════════════════════ */
+section{position:relative;z-index:10}
+ 
+.section-tag{
+  font-family:var(--mono);font-size:.65rem;font-weight:600;
+  letter-spacing:2px;text-transform:uppercase;color:var(--teal);
+  margin-bottom:12px;display:flex;align-items:center;gap:10px;
+}
+.section-tag::before{content:'//'}
+ 
+.section-h{
+  font-family:var(--mono);font-weight:800;
+  font-size:clamp(1.6rem,3vw,2.4rem);
+  color:#fff;letter-spacing:-0.5px;
+  margin-bottom:16px;
+}
+ 
+.section-sub{
+  font-size:.95rem;color:var(--sub);
+  max-width:560px;line-height:1.7;
+}
+ 
+/* ══════════════════════════════════
+   FEATURES
+══════════════════════════════════ */
+#features{padding:100px 80px}
+ 
+.features-head{margin-bottom:60px}
+ 
+.features-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--border);border:1px solid var(--border);
+}
+ 
+.feat-card{
+  background:var(--bg);padding:36px;
+  transition:.25s;position:relative;overflow:hidden;
+}
+.feat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--teal),transparent);
+  transform:scaleX(0);transition:.3s;
+}
+.feat-card:hover{background:var(--teal-glow-sm)}
+.feat-card:hover::before{transform:scaleX(1)}
+ 
+.feat-num{
+  font-family:var(--mono);font-size:.65rem;color:var(--sub2);
+  letter-spacing:2px;margin-bottom:20px;
+}
+.feat-icon{
+  width:44px;height:44px;border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:18px;color:var(--teal);transition:.2s;
+}
+.feat-card:hover .feat-icon{border-color:var(--teal);box-shadow:0 0 16px var(--teal-glow)}
+.feat-icon svg{width:20px;height:20px}
+.feat-title{
+  font-family:var(--mono);font-weight:700;font-size:.92rem;
+  color:#fff;letter-spacing:.5px;margin-bottom:10px;
+  text-transform:uppercase;
+}
+.feat-desc{font-size:.85rem;color:var(--sub);line-height:1.6}
+ 
+/* ══════════════════════════════════
+   PARKING PREVIEW
+══════════════════════════════════ */
+#preview{
+  padding:80px;
+  border-top:1px solid var(--border);
+}
+ 
+.preview-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:48px}
+ 
+.pk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+ 
+.pk-card{
+  border:1px solid var(--border2);
+  background:var(--bg3);
+  transition:.25s;cursor:pointer;position:relative;overflow:hidden;
+}
+.pk-card::after{
+  content:'';position:absolute;inset:0;
+  border:1px solid var(--teal);opacity:0;transition:.2s;
+}
+.pk-card:hover{transform:translateY(-3px);box-shadow:0 8px 40px rgba(30,214,165,0.1)}
+.pk-card:hover::after{opacity:1}
+ 
+.pk-img{
+  height:140px;background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.pk-img::before{
+  content:'';position:absolute;inset:0;
+  background:
+    repeating-linear-gradient(90deg,transparent,transparent 18px,rgba(30,214,165,0.04) 18px,rgba(30,214,165,0.04) 19px),
+    repeating-linear-gradient(0deg,transparent,transparent 18px,rgba(30,214,165,0.04) 18px,rgba(30,214,165,0.04) 19px);
+}
+.pk-img-inner{
+  width:80px;height:50px;border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:1.5rem;
+  position:relative;z-index:1;
+}
+ 
+.pk-body{padding:20px}
+.pk-name{
+  font-family:var(--mono);font-weight:700;font-size:.85rem;
+  color:#fff;letter-spacing:.5px;margin-bottom:12px;
+  text-transform:uppercase;
+}
+.pk-row{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.pk-price{
+  font-family:var(--mono);font-weight:800;font-size:1.1rem;
+  color:var(--teal);
+}
+.pk-price small{font-size:.65rem;color:var(--sub);font-weight:400}
+ 
+.avail-tag{
+  font-family:var(--mono);font-size:.62rem;font-weight:600;
+  letter-spacing:1px;padding:4px 10px;border:1px solid;
+}
+.avail-g{color:var(--teal);border-color:rgba(30,214,165,.3);background:rgba(30,214,165,.06)}
+.avail-y{color:#febc2e;border-color:rgba(254,188,46,.3);background:rgba(254,188,46,.06)}
+.avail-r{color:#ff5f57;border-color:rgba(255,95,87,.3);background:rgba(255,95,87,.06)}
+ 
+.pk-meta{
+  font-family:var(--mono);font-size:.68rem;color:var(--sub2);
+  margin-top:8px;
+}
+ 
+/* slot bars */
+.slot-bars{display:flex;gap:3px;margin-top:14px}
+.slot-bar{flex:1;height:3px;background:var(--border2)}
+.slot-bar.filled{background:var(--teal)}
+.slot-bar.warn{background:#febc2e}
+.slot-bar.full{background:#ff5f57}
+ 
+/* ══════════════════════════════════
+   CTA SECTION
+══════════════════════════════════ */
+#cta{
+  padding:100px 80px;
+  border-top:1px solid var(--border);
+  text-align:center;position:relative;overflow:hidden;
+}
+ 
+#cta::before{
+  content:'';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:600px;height:600px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(30,214,165,0.06) 0%,transparent 70%);
+  pointer-events:none;
+}
+ 
+.cta-corner{
+  position:absolute;font-family:var(--mono);font-size:.6rem;
+  color:var(--sub2);letter-spacing:1px;
+}
+.cta-corner.tl{top:24px;left:32px}
+.cta-corner.tr{top:24px;right:32px}
+.cta-corner.bl{bottom:24px;left:32px}
+.cta-corner.br{bottom:24px;right:32px}
+ 
+.cta-label{
+  font-family:var(--mono);font-size:.65rem;letter-spacing:2px;
+  color:var(--teal);text-transform:uppercase;margin-bottom:20px;
+}
+.cta-h{
+  font-family:var(--mono);font-weight:800;
+  font-size:clamp(1.8rem,3.5vw,3rem);
+  color:#fff;letter-spacing:-1px;
+  line-height:1.1;margin-bottom:32px;max-width:700px;margin-left:auto;margin-right:auto;
+}
+.cta-h span{color:var(--teal)}
+ 
+.cta-btn{
+  display:inline-flex;align-items:center;gap:12px;
+  font-family:var(--mono);font-size:.82rem;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;text-decoration:none;
+  padding:18px 44px;
+  background:var(--teal);color:#000;
+  border:1px solid var(--teal);
+  transition:.25s;position:relative;overflow:hidden;
+}
+.cta-btn:hover{
+  background:var(--teal-hover);
+  box-shadow:0 0 60px var(--teal-glow),0 0 120px rgba(30,214,165,0.1);
+  transform:translateY(-2px);
+}
+ 
+/* ══════════════════════════════════
+   FOOTER
+══════════════════════════════════ */
+footer{
+  border-top:1px solid var(--border);
+  position:relative;z-index:10;
+}
+ 
+.footer-top{
+  display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr 1.4fr;
+  gap:40px;padding:60px 80px;
+  border-bottom:1px solid var(--border);
+}
+ 
+.footer-col h4{
+  font-family:var(--mono);font-weight:700;font-size:.72rem;
+  letter-spacing:2px;text-transform:uppercase;color:#fff;
+  margin-bottom:20px;padding-bottom:10px;
+  border-bottom:1px solid var(--border);
+}
+.footer-col p{font-size:.82rem;color:var(--sub);line-height:1.7;margin-bottom:6px}
+.footer-link{
+  display:block;font-size:.8rem;color:var(--sub);
+  text-decoration:none;padding:4px 0;
+  font-family:var(--mono);font-size:.72rem;
+  transition:.15s;letter-spacing:.5px;
+}
+.footer-link:hover{color:var(--teal)}
+.footer-link::before{content:'> ';opacity:0;transition:.15s}
+.footer-link:hover::before{opacity:1}
+ 
+.status-items{display:flex;flex-direction:column;gap:8px}
+.status-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 10px;border:1px solid var(--border);
+  font-family:var(--mono);font-size:.68rem;
+}
+.status-key{color:var(--sub2)}
+.status-val{color:var(--teal);font-weight:600}
+ 
+.footer-logo{
+  font-family:var(--mono);font-weight:800;font-size:1.4rem;
+  color:var(--teal);letter-spacing:3px;margin-bottom:14px;
+}
+ 
+.footer-bottom{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 80px;
+}
+.footer-copy{font-family:var(--mono);font-size:.65rem;color:var(--sub2);letter-spacing:1px}
+.footer-ver{font-family:var(--mono);font-size:.65rem;color:var(--sub2);letter-spacing:1px}
+ 
+/* ══════════════════════════════════
+   SCROLL REVEAL
+══════════════════════════════════ */
+.reveal{
+  opacity:0;transform:translateY(20px);
+  transition:opacity .6s ease,transform .6s ease;
+}
+.reveal.visible{opacity:1;transform:none}
+ 
+/* ══════════════════════════════════
+   SECTION DIVIDER LINES
+══════════════════════════════════ */
+.h-line{
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--teal),transparent);
+  opacity:.25;margin:0;
+}
+ 
+/* ══════════════════════════════════
+   CORNER BRACKETS
+══════════════════════════════════ */
+.bracket-box{
+  position:relative;padding:24px;border:1px solid var(--border);
+}
+.bracket-box::before,.bracket-box::after{
+  content:'';position:absolute;
+  width:12px;height:12px;
+}
+.bracket-box::before{top:-1px;left:-1px;border-top:2px solid var(--teal);border-left:2px solid var(--teal)}
+.bracket-box::after{bottom:-1px;right:-1px;border-bottom:2px solid var(--teal);border-right:2px solid var(--teal)}
+ 
+/* ══════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════ */
+@media(max-width:1100px){
+  .hero{grid-template-columns:1fr;padding:100px 40px 60px;gap:40px}
+  .hero-right{display:none}
+  .features-grid{grid-template-columns:repeat(2,1fr)}
+  .pk-grid{grid-template-columns:repeat(2,1fr)}
+  .footer-top{grid-template-columns:1fr 1fr;gap:30px}
+  #features,#preview,#cta{padding:60px 40px}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  nav{padding:0 24px}
+}
+@media(max-width:640px){
+  .features-grid{grid-template-columns:1fr}
+  .pk-grid{grid-template-columns:1fr}
+  .footer-top{grid-template-columns:1fr}
+  .footer-bottom,.footer-top{padding:40px 24px}
+  .hero{padding:90px 24px 50px}
+  .metrics{grid-template-columns:1fr 1fr}
+  .metric{padding:20px 24px}
+  .nav-links{display:none}
+}
+</style>
+</head>
+<body>
+<div class="noise"></div>
+ 
+<!-- ══ NAVBAR ══ -->
+<nav>
+  <a href="#" class="nav-logo">PARK-VOID</a>
+  <div class="nav-links">
+    <a href="#" class="nav-link">Home</a>
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#preview" class="nav-link">Locations</a>
+    <a href="#contact" class="nav-link">Contact</a>
+  </div>
+  <a href="auth.html" class="nav-cta">ACCESS SYSTEM</a>
+</nav>
+ 
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="status-pill">
+      <span class="status-dot"></span>
+      SYSTEMS ONLINE
+    </div>
+ 
+    <h1 class="hero-h1">
+      <span class="flicker">SMART</span> PARKING<br>
+      CONTROL<br>
+      SYSTEM
+    </h1>
+ 
+    <p class="hero-sub">
+      Find, book, and manage parking spaces in real-time with intelligent tracking. Precision-grade infrastructure for modern urban mobility.
+    </p>
+ 
+    <a href="auth.html" class="hero-cta">
+      GET STARTED
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+ 
+  <!-- Terminal -->
+  <div class="hero-right">
+    <div class="terminal bracket-box" style="padding:0;border:1px solid #1a1a1a">
+      <div class="term-bar">
+        <span class="term-dot r"></span>
+        <span class="term-dot y"></span>
+        <span class="term-dot g"></span>
+        <span class="term-title">PARK-VOID // TERMINAL v1.0.3</span>
+      </div>
+      <div class="term-body" id="termBody">
+        <!-- lines injected by JS -->
+      </div>
+    </div>
+ 
+    <!-- mini stats below terminal -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-top:1px">
+      <div style="background:var(--bg3);padding:14px 18px;font-family:var(--mono);font-size:.65rem">
+        <span style="color:var(--sub2)">LATENCY //</span>
+        <span style="color:var(--teal);margin-left:8px">120ms</span>
+      </div>
+      <div style="background:var(--bg3);padding:14px 18px;font-family:var(--mono);font-size:.65rem">
+        <span style="color:var(--sub2)">UPTIME //</span>
+        <span style="color:var(--teal);margin-left:8px">99.9%</span>
+      </div>
+    </div>
+  </div>
+</section>
+ 
+<!-- ══ METRICS ══ -->
+<div class="metrics reveal">
+  <div class="metric">
+    <span class="metric-num" data-target="1200">0</span>
+    <span class="metric-label">Active Users</span>
+  </div>
+  <div class="metric">
+    <span class="metric-num" data-target="350">0</span>
+    <span class="metric-label">Parking Locations</span>
+  </div>
+  <div class="metric">
+    <span class="metric-num" data-target="98" data-suffix="%">0</span>
+    <span class="metric-label">Slot Accuracy</span>
+  </div>
+  <div class="metric">
+    <span class="metric-num">24/7</span>
+    <span class="metric-label">System Active</span>
+  </div>
+</div>
+ 
+<!-- ══ FEATURES ══ -->
+<section id="features">
+  <div class="features-head reveal">
+    <div class="section-tag">CAPABILITIES</div>
+    <h2 class="section-h">SYSTEM FEATURES</h2>
+    <p class="section-sub">Enterprise-grade parking infrastructure designed for precision, speed, and complete operational control.</p>
+  </div>
+ 
+  <div class="features-grid">
+    <!-- 01 -->
+    <div class="feat-card reveal">
+      <div class="feat-num">// 01</div>
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square">
+          <circle cx="11" cy="11" r="7"/><line x1="17" y1="17" x2="22" y2="22"/>
+        </svg>
+      </div>
+      <div class="feat-title">Smart Search</div>
+      <div class="feat-desc">Locate parking by area, price range, and distance. Intelligent filtering surfaces exactly what you need.</div>
+    </div>
+ 
+    <!-- 02 -->
+    <div class="feat-card reveal" style="animation-delay:.05s">
+      <div class="feat-num">// 02</div>
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square">
+          <rect x="3" y="4" width="18" height="18" rx="0"/><line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </div>
+      <div class="feat-title">Real-Time Booking</div>
+      <div class="feat-desc">Instant slot reservation with atomic conflict prevention. Zero double-booking guarantee.</div>
+    </div>
+ 
+    <!-- 03 -->
+    <div class="feat-card reveal" style="animation-delay:.1s">
+      <div class="feat-num">// 03</div>
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </div>
+      <div class="feat-title">Live Slot Tracking</div>
+      <div class="feat-desc">Monitor availability in real-time. Dynamic occupancy data with sub-second refresh rates.</div>
+    </div>
+ 
+    <!-- 04 -->
+    <div class="feat-card reveal" style="animation-delay:.15s">
+      <div class="feat-num">// 04</div>
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+      </div>
+      <div class="feat-title">Dual Role System</div>
+      <div class="feat-desc">Separate Parker and Landowner dashboards with role-based access controls and permissions.</div>
+    </div>
+ 
+    <!-- 05 -->
+    <div class="feat-card reveal" style="animation-delay:.2s">
+      <div class="feat-num">// 05</div>
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square">
+          <rect x="1" y="4" width="22" height="16" rx="0"/><line x1="1" y1="10" x2="23" y2="10"/>
+        </svg>
+      </div>
+      <div class="feat-title">Secure Payments</div>
+      <div class="feat-desc">Integrated wallet system with transaction history, refunds, and encrypted payment processing.</div>
+    </div>
+ 
+    <!-- 06 -->
+    <div class="feat-card reveal" style="animation-delay:.25s">
+      <div class="feat-num">// 06</div>
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </div>
+      <div class="feat-title">Easy Management</div>
+      <div class="feat-desc">Add, configure, and manage parking spaces from a unified dashboard with advanced analytics.</div>
+    </div>
+  </div>
+</section>
+ 
+<!-- ══ PARKING PREVIEW ══ -->
+<section id="preview">
+  <div class="preview-head reveal">
+    <div>
+      <div class="section-tag">LIVE LOCATIONS</div>
+      <h2 class="section-h">PARKING NETWORK</h2>
+    </div>
+    <div style="font-family:var(--mono);font-size:.65rem;color:var(--sub);letter-spacing:1px;text-align:right">
+      <div style="color:var(--teal)">● LIVE DATA</div>
+      <div style="margin-top:4px">UPDATED: <span id="liveTime"></span></div>
+    </div>
+  </div>
+ 
+  <div class="pk-grid">
+    <!-- Card 1 -->
+    <div class="pk-card reveal">
+      <div class="pk-img">
+        <div class="pk-img-inner" style="color:var(--teal)">🅿</div>
+      </div>
+      <div class="pk-body">
+        <div style="font-family:var(--mono);font-size:.6rem;color:var(--sub2);margin-bottom:6px;letter-spacing:1px">LOC-001 // BASEMENT</div>
+        <div class="pk-name">Central Mall Basement</div>
+        <div class="pk-meta">Block B12 · 11 slots available · Open 24/7</div>
+        <div class="slot-bars">
+          <div class="slot-bar filled"></div><div class="slot-bar filled"></div><div class="slot-bar filled"></div>
+          <div class="slot-bar filled"></div><div class="slot-bar"></div><div class="slot-bar"></div>
+          <div class="slot-bar"></div><div class="slot-bar"></div><div class="slot-bar"></div><div class="slot-bar"></div>
+        </div>
+        <div class="pk-row">
+          <div class="pk-price">₹40<small> /hr</small></div>
+          <span class="avail-tag avail-g">● AVAILABLE</span>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- Card 2 -->
+    <div class="pk-card reveal" style="animation-delay:.08s">
+      <div class="pk-img">
+        <div class="pk-img-inner" style="color:#febc2e">🅿</div>
+      </div>
+      <div class="pk-body">
+        <div style="font-family:var(--mono);font-size:.6rem;color:var(--sub2);margin-bottom:6px;letter-spacing:1px">LOC-034 // TOWER</div>
+        <div class="pk-name">City Plaza Tower</div>
+        <div class="pk-meta">Level P3 · 4 slots left · Mon–Sun 06:00–23:00</div>
+        <div class="slot-bars">
+          <div class="slot-bar warn"></div><div class="slot-bar warn"></div><div class="slot-bar warn"></div>
+          <div class="slot-bar warn"></div><div class="slot-bar warn"></div><div class="slot-bar warn"></div>
+          <div class="slot-bar warn"></div><div class="slot-bar warn"></div><div class="slot-bar"></div><div class="slot-bar"></div>
+        </div>
+        <div class="pk-row">
+          <div class="pk-price">₹50<small> /hr</small></div>
+          <span class="avail-tag avail-y">⚠ FEW SLOTS</span>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- Card 3 -->
+    <div class="pk-card reveal" style="animation-delay:.16s">
+      <div class="pk-img">
+        <div class="pk-img-inner" style="color:#ff5f57">🅿</div>
+      </div>
+      <div class="pk-body">
+        <div style="font-family:var(--mono);font-size:.6rem;color:var(--sub2);margin-bottom:6px;letter-spacing:1px">LOC-090 // HUB</div>
+        <div class="pk-name">Metro Hub Parking</div>
+        <div class="pk-meta">Level L1-18 · 0 slots · Waitlist active</div>
+        <div class="slot-bars">
+          <div class="slot-bar full"></div><div class="slot-bar full"></div><div class="slot-bar full"></div>
+          <div class="slot-bar full"></div><div class="slot-bar full"></div><div class="slot-bar full"></div>
+          <div class="slot-bar full"></div><div class="slot-bar full"></div><div class="slot-bar full"></div><div class="slot-bar full"></div>
+        </div>
+        <div class="pk-row">
+          <div class="pk-price">₹30<small> /hr</small></div>
+          <span class="avail-tag avail-r">✕ FULL</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+ 
+<!-- ══ CTA ══ -->
+<section id="cta">
+  <div class="cta-corner tl">SYS.CTA // ENGAGE</div>
+  <div class="cta-corner tr">NODE: ACTIVE</div>
+  <div class="cta-corner bl">REV: v1.0.3</div>
+  <div class="cta-corner br">STATUS: ONLINE</div>
+ 
+  <div class="cta-label reveal">// INITIATE ACCESS</div>
+  <h2 class="cta-h reveal">
+    Start Managing Your<br>
+    Parking <span>Efficiently</span>
+  </h2>
+  <a href="auth.html" class="cta-btn reveal">
+    ACCESS DASHBOARD
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  </a>
+</section>
+ 
+<!-- ══ FOOTER ══ -->
+<footer id="contact">
+  <div class="footer-top">
+    <!-- About -->
+    <div class="footer-col">
+      <div class="footer-logo">PARK-VOID</div>
+      <p>Precision-grade parking management infrastructure for modern urban environments. Engineered for reliability.</p>
+      <div style="margin-top:20px;font-family:var(--mono);font-size:.65rem;color:var(--sub2);letter-spacing:1px">
+        <div>● NODE STATUS: OPERATIONAL</div>
+        <div style="margin-top:4px">● NETWORK: STABLE</div>
+      </div>
+    </div>
+ 
+    <!-- Features -->
+    <div class="footer-col">
+      <h4>Features</h4>
+      <a href="#" class="footer-link">Smart Search</a>
+      <a href="#" class="footer-link">Real-Time Booking</a>
+      <a href="#" class="footer-link">Live Slot Tracking</a>
+      <a href="#" class="footer-link">Dual Role System</a>
+      <a href="#" class="footer-link">Secure Payments</a>
+    </div>
+ 
+    <!-- Contact -->
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <a href="#" class="footer-link">Support Terminal</a>
+      <a href="#" class="footer-link">Documentation</a>
+      <a href="#" class="footer-link">API Reference</a>
+      <a href="#" class="footer-link">Bug Reports</a>
+      <a href="#" class="footer-link">Partnership</a>
+    </div>
+ 
+    <!-- Legal -->
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="#" class="footer-link">Privacy Policy</a>
+      <a href="#" class="footer-link">Terms of Service</a>
+      <a href="#" class="footer-link">Cookie Policy</a>
+      <a href="#" class="footer-link">Data Processing</a>
+    </div>
+ 
+    <!-- System Status -->
+    <div class="footer-col">
+      <h4>System Status</h4>
+      <div class="status-items">
+        <div class="status-item">
+          <span class="status-key">UPTIME</span>
+          <span class="status-val">99.9%</span>
+        </div>
+        <div class="status-item">
+          <span class="status-key">LATENCY</span>
+          <span class="status-val">120ms</span>
+        </div>
+        <div class="status-item">
+          <span class="status-key">VERSION</span>
+          <span class="status-val">v1.0.3</span>
+        </div>
+        <div class="status-item">
+          <span class="status-key">NODES</span>
+          <span class="status-val">12 / 12</span>
+        </div>
+        <div class="status-item">
+          <span class="status-key">BUILD</span>
+          <span class="status-val">STABLE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 PARK-VOID SYSTEMS. ALL RIGHTS RESERVED.</div>
+    <div class="footer-ver">BUILD: 2026.03 // NODE: PROD-01</div>
+  </div>
+</footer>
+ 
+<script>
+/* ── TERMINAL ANIMATION ── */
+(function(){
+  const lines = [
+    { delay:400,  type:'cmd',  prompt:'$', text:'./init-parking-system.sh' },
+    { delay:900,  type:'info', text:'[SYS]  Booting kernel modules...' },
+    { delay:1300, type:'info', text:'[DB]   Connecting to database...' },
+    { delay:1700, type:'info', text:'[DB]   Loading slot manifest...' },
+    { delay:2100, type:'ok',   text:'[✓]   Database connection established' },
+    { delay:2500, type:'info', text:'[NET]  Scanning parking nodes...' },
+    { delay:2900, type:'ok',   text:'[✓]   12 / 12 nodes online' },
+    { delay:3300, type:'info', text:'[AUTH] Validating certificates...' },
+    { delay:3700, type:'ok',   text:'[✓]   Auth module loaded' },
+    { delay:4100, type:'warn', text:'[!]   Legacy node P-003 degraded' },
+    { delay:4500, type:'info', text:'[SYS]  Failover route assigned' },
+    { delay:4900, type:'ok',   text:'[✓]   System ready — 350 locations active' },
+    { delay:5300, type:'cmd',  prompt:'$', text:'_', cursor:true },
+  ];
+ 
+  const body = document.getElementById('termBody');
+ 
+  lines.forEach(({ delay, type, prompt, text, cursor }) => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = 'term-line';
+      div.style.animationDelay = '0s';
+ 
+      if (type === 'cmd') {
+        div.innerHTML = `<span class="term-prompt">${prompt||'$'}</span><span class="term-cmd">${cursor ? '<span class="cursor-blink">█</span>' : text}</span>`;
+      } else if (type === 'ok') {
+        div.innerHTML = `<span class="term-ok">${text}</span>`;
+      } else if (type === 'warn') {
+        div.innerHTML = `<span class="term-warn">${text}</span>`;
+      } else {
+        div.innerHTML = `<span class="term-info">${text}</span>`;
+      }
+ 
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+    }, delay);
+  });
+})();
+ 
+/* ── LIVE TIME ── */
+function updateTime(){
+  const el = document.getElementById('liveTime');
+  if(el){
+    const now = new Date();
+    el.textContent = now.toTimeString().slice(0,8);
+  }
+}
+updateTime();
+setInterval(updateTime, 1000);
+ 
+/* ── SCROLL REVEAL ── */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+ 
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+ 
+/* ── COUNTER ANIMATION ── */
+function animateCounter(el) {
+  const target = parseInt(el.dataset.target);
+  const suffix = el.dataset.suffix || '+';
+  const duration = 2000;
+  const step = target / (duration / 16);
+  let current = 0;
+ 
+  const timer = setInterval(() => {
+    current += step;
+    if(current >= target){
+      current = target;
+      clearInterval(timer);
+    }
+    el.textContent = Math.floor(current) + suffix;
+  }, 16);
+}
+ 
+const counterObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      const nums = e.target.querySelectorAll('[data-target]');
+      nums.forEach(animateCounter);
+      counterObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+ 
+document.querySelectorAll('.metrics').forEach(el => counterObserver.observe(el));
+ 
+/* ── SMOOTH NAV ── */
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if(target){ e.preventDefault(); target.scrollIntoView({ behavior:'smooth' }); }
+  });
+});
+ 
+/* ── CUSTOM CURSOR TRAIL ── */
+document.addEventListener('mousemove', e => {
+  // subtle teal glow follows cursor
+  document.documentElement.style.setProperty('--mx', e.clientX + 'px');
+  document.documentElement.style.setProperty('--my', e.clientY + 'px');
+});
+</script>
+</body>
+</html>
