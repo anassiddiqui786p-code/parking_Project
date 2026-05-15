@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Parking Management System</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #050b1f;
+  --paper: #0a1128;
+  --accent: #19e6b3;
+  --accent2: #17c9ff;
+  --muted: #8d96b5;
+  --line: #202b4e;
+  --card: #121a34;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --danger: #ff738a;
+}
+
+html, body {
+  height: 100%;
+  background: linear-gradient(180deg, #080f24 0%, #050b1f 100%);
+  font-family: 'Inter', sans-serif;
+  color: #eaf1ff;
+  overflow-x: hidden;
+}
+
+.page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.left-panel {
+  background: #001014;
+  color: #eaf1ff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 52px 48px;
+  position: relative;
+  overflow: hidden;
+  border-right: 1px solid var(--line);
+}
+
+.left-panel::before {
+  content: '';
+  position: absolute;
+  width: 420px; height: 420px;
+  background: radial-gradient(circle, rgba(25,230,179,0.20) 0%, transparent 70%);
+  top: -80px; left: -80px;
+  pointer-events: none;
+}
+
+.left-panel::after {
+  content: '';
+  position: absolute;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(188, 201, 8, 0.18) 0%, transparent 70%);
+  bottom: 60px; right: -60px;
+  pointer-events: none;
+}
+
+.brand {
+  position: relative;
+  z-index: 1;
+}
+
+.brand-icon {
+  width: 48px; height: 48px;
+  background: var(--accent);
+  color: #02131a;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 22px rgba(25,230,179,0.30);
+}
+
+.brand-name {
+  font-family: 'Baloo 2', system-ui;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg,#00f0ff, #00ffa6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  
+  
+}
+
+.brand-title {
+  font-family: 'Baloo 2', system-ui;
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1.1;
+   color: #333b53;
+}
+
+.left-hero {
+  position: relative;
+  z-index: 1;
+}
+
+.left-tagline {
+  font-family: 'Baloo 2', system-ui;
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1.05;
+  color: #f1f6ff;
+  margin-bottom: 20px;
+}
+
+.left-tagline span {
+  color: var(--accent);
+}
+
+.left-desc {
+  font-size: 15px;
+  color: rgba(234,241,255,0.66);
+  line-height: 1.7;
+  max-width: 320px;
+}
+
+.left-stats {
+  display: flex;
+  gap: 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-item { display: flex; flex-direction: column; gap: 3px; }
+
+.stat-num {
+  font-family: 'Baloo 2', system-ui;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.stat-label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(234,241,255,0.45);
+}
+
+.right-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 60px;
+  background: #001014;
+  position: relative;
+}
+
+.auth-box {
+  width: 100%;
+  max-width: 400px;
+}
+
+.role-toggle {
+  display: flex;
+  background: #101a3a;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 36px;
+  border: 1px solid var(--line);
+}
+
+.role-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  font-family: 'Baloo 2', system-ui;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.22s ease;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+
+.role-btn.active {
+  background: #01071a;
+  color: #f1f6ff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.24);
+}
+
+.form-header {
+  margin-bottom: 28px;
+}
+
+.form-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.form-heading {
+  font-family: 'Baloo 2', system-ui;
+  font-size: 30px;
+  font-weight: 800;
+  color: #f1f6ff;
+  line-height: 1.1;
+}
+
+.form-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--line);
+  margin-bottom: 28px;
+}
+
+.tab-btn {
+  padding: 10px 22px 12px;
+  border: none;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  position: relative;
+  transition: color 0.18s;
+}
+
+.tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transition: transform 0.22s ease;
+}
+
+.tab-btn.active {
+  color: #f1f6ff;
+  font-weight: 600;
+}
+
+.tab-btn.active::after { transform: scaleX(1); }
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #93a0c5;
+  margin-bottom: 7px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"] {
+  width: 100%;
+  padding: 13px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  color: #eaf1ff;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(25,230,179,0.16);
+}
+
+input:invalid {
+  border-color: var(--danger);
+}
+
+input::placeholder { color: #6f7ba3; }
+
+.validation-error {
+  display: none;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.validation-error.visible {
+  display: block;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #04201a;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Baloo 2', system-ui;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+  box-shadow: 0 8px 18px rgba(25,230,179,0.30);
+}
+
+.btn-primary:hover {
+  background: #12d3a4;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(25,230,179,0.38);
+}
+
+.btn-primary:active { transform: translateY(0); }
+
+.forgot-row {
+  text-align: right;
+  margin-top: -8px;
+  margin-bottom: 16px;
+}
+
+.forgot-link {
+  font-size: 13px;
+  color: #93a0c5;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.forgot-link:hover { color: var(--accent); }
+
+@media (max-width: 800px) {
+  .page { grid-template-columns: 1fr; }
+  .left-panel { display: none; }
+  .right-panel { padding: 36px 24px; }
+}
+
+.form-section {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="left-panel">
+    <div class="brand">
+      <div class="brand-icon">🅿</div>
+      <div class="brand-name">PARK-VOID</div>
+      <div class="brand-title">Smart-Parking</div>
+    </div>
+    <div class="left-hero">
+      <div class="left-tagline">Smart<br>Parking,<br><span>Zero</span><br>Hassle.</div>
+      <p class="left-desc">Connect landowners and parkers on one seamless platform. Real-time availability, secure bookings, instant payments.</p>
+    </div>
+    <div class="left-stats">
+      <div class="stat-item"><span class="stat-num">12K+</span><span class="stat-label">Spots</span></div>
+      <div class="stat-item"><span class="stat-num">8.4K</span><span class="stat-label">Users</span></div>
+      <div class="stat-item"><span class="stat-num">99%</span><span class="stat-label">Uptime</span></div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="auth-box">
+      <div class="role-toggle">
+        <button class="role-btn active" id="btn-parker" onclick="switchRole('parker')">🚗 Parker</button>
+        <button class="role-btn" id="btn-landowner" onclick="switchRole('landowner')">🏢 Landowner</button>
+      </div>
+
+      <div id="section-parker">
+        <div class="form-header">
+          <div class="form-eyebrow" id="eyebrow-parker">Parker Portal</div>
+          <div class="form-heading" id="heading-parker">Welcome back</div>
+        </div>
+        <div class="form-tabs">
+          <button class="tab-btn active" id="ptab-login" onclick="switchForm('parker','login')">Login</button>
+          <button class="tab-btn" id="ptab-signup" onclick="switchForm('parker','signup')">Create Account</button>
+        </div>
+        <div id="parker-login" class="form-section">
+          <form action="login.php" method="POST">
+
+    <div class="form-group">
+        <label for="email">Email or Mobile</label>
+        <input 
+            type="text" 
+            id="email"
+            name="email" 
+            placeholder="Enter your email or mobile number" 
+            required
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+            type="password" 
+            id="password"
+            name="password" 
+            placeholder="Enter your password" 
+            required
+        >
+    </div>
+
+    <button type="submit" class="btn-primary">
+        Login as Parker →
+    </button>
+
+</form>
+        </div>
+
+        <div id="parker-signup" class="form-section" style="display:none;">
+          <form action="signup.php" method="POST">
+
+    <div class="form-group">
+        <label for="signup-email">Email</label>
+        <input 
+            type="email" 
+            id="signup-email"
+            name="email" 
+            placeholder="Enter your email" 
+            required
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="signup-password">Password</label>
+        <input 
+            type="password" 
+            id="signup-password"
+            name="password" 
+            placeholder="Create a password" 
+            required
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="signup-confirm">Confirm Password</label>
+        <input 
+            type="password" 
+            id="signup-confirm"
+            name="confirm_password" 
+            placeholder="Confirm your password" 
+            required
+        >
+    </div>
+
+    <!-- VERY IMPORTANT: role -->
+    <input type="hidden" name="role" value="parker">
+
+    <button type="submit" class="btn-primary">
+        Create Parker Account →
+    </button>
+
+</form>        </div>
+      </div>
+
+      <div id="section-landowner" style="display:none;">
+        <div class="form-header">
+          <div class="form-eyebrow" id="eyebrow-landowner">Landowner Portal</div>
+          <div class="form-heading" id="heading-landowner">Welcome back</div>
+        </div>
+        <div class="form-tabs">
+          <button class="tab-btn active" id="ltab-login" onclick="switchForm('landowner','login')">Login</button>
+          <button class="tab-btn" id="ltab-signup" onclick="switchForm('landowner','signup')">Create Account</button>
+        </div>
+        <div id="landowner-login" class="form-section">
+          <form action="login.php" method="POST">
+
+    <div class="form-group">
+        <label for="email">Email</label>
+        <input 
+            type="email" 
+            id="email"
+            name="email" 
+            placeholder="Enter your email" 
+            required
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+            type="password" 
+            id="password"
+            name="password" 
+            placeholder="Enter your password" 
+            required
+        >
+    </div>
+
+    <!-- IMPORTANT: role -->
+    <input type="hidden" name="role" value="landowner">
+
+    <button type="submit" class="btn-primary">
+        Login as Landowner →
+    </button>
+
+</form>
+        </div>
+
+        <div id="landowner-signup" class="form-section" style="display:none;">
+          <form action="signup.php" method="POST">
+
+    <div class="form-group">
+        <label for="owner-email">Email</label>
+        <input 
+            type="email" 
+            id="owner-email"
+            name="email" 
+            placeholder="Enter your email" 
+            required
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="owner-password">Password</label>
+        <input 
+            type="password" 
+            id="owner-password"
+            name="password" 
+            placeholder="Create a password" 
+            required
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="owner-confirm">Confirm Password</label>
+        <input 
+            type="password" 
+            id="owner-confirm"
+            name="confirm_password" 
+            placeholder="Confirm your password" 
+            required
+        >
+    </div>
+    
+    <input type="hidden" name="role" value="landowner">
+
+    <button type="submit" class="btn-primary">
+        Create Landowner Account →
+    </button>
+
+</form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var currentRole = 'parker';
+
+  function switchRole(role) {
+    currentRole = role;
+    document.getElementById('btn-parker').classList.toggle('active', role === 'parker');
+    document.getElementById('btn-landowner').classList.toggle('active', role === 'landowner');
+    document.getElementById('section-parker').style.display    = (role === 'parker')    ? 'block' : 'none';
+    document.getElementById('section-landowner').style.display = (role === 'landowner') ? 'block' : 'none';
+  }
+
+  function switchForm(role, view) {
+    if (role === 'parker') {
+      document.getElementById('ptab-login').classList.toggle('active', view === 'login');
+      document.getElementById('ptab-signup').classList.toggle('active', view === 'signup');
+      document.getElementById('parker-login').style.display  = (view === 'login')  ? 'block' : 'none';
+      document.getElementById('parker-signup').style.display = (view === 'signup') ? 'block' : 'none';
+      document.getElementById('heading-parker').textContent = view === 'login' ? 'Welcome back' : 'Create your account';
+    } else {
+      document.getElementById('ltab-login').classList.toggle('active', view === 'login');
+      document.getElementById('ltab-signup').classList.toggle('active', view === 'signup');
+      document.getElementById('landowner-login').style.display  = (view === 'login')  ? 'block' : 'none';
+      document.getElementById('landowner-signup').style.display = (view === 'signup') ? 'block' : 'none';
+      document.getElementById('heading-landowner').textContent = view === 'login' ? 'Welcome back' : 'Create your account';
+    }
+
+    var el = document.getElementById(role + '-' + view);
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = 'fadeIn 0.3s ease';
+  }
+
+  function validatePasswordMatch(rolePrefix) {
+    var passwordInput = document.getElementById(rolePrefix + '-signup-pass');
+    var confirmInput = document.getElementById(rolePrefix + '-signup-confirm-pass');
+    var errorText = document.getElementById(rolePrefix + '-signup-error');
+    var isMatch = passwordInput.value === confirmInput.value;
+
+    if (confirmInput.value.length === 0) {
+      confirmInput.setCustomValidity('');
+      errorText.classList.remove('visible');
+      return true;
+    }
+
+    if (!isMatch) {
+      confirmInput.setCustomValidity('Passwords do not match.');
+      errorText.classList.add('visible');
+      return false;
+    }
+
+    confirmInput.setCustomValidity('');
+    errorText.classList.remove('visible');
+    return true;
+  }
+
+  function setupPasswordValidation(rolePrefix) {
+    var passwordInput = document.getElementById(rolePrefix + '-signup-pass');
+    var confirmInput = document.getElementById(rolePrefix + '-signup-confirm-pass');
+
+    passwordInput.addEventListener('input', function () {
+      validatePasswordMatch(rolePrefix);
+    });
+
+    confirmInput.addEventListener('input', function () {
+      validatePasswordMatch(rolePrefix);
+    });
+  }
+
+  function handleSubmit(e, role, action) {
+    e.preventDefault();
+
+    if (action === 'Signup') {
+      var rolePrefix = role.toLowerCase();
+      if (!validatePasswordMatch(rolePrefix)) {
+        alert(role + ' Signup failed: passwords do not match.');
+        return;
+      }
+    }
+
+    alert(role + ' ' + action + ' submitted successfully!');
+  }
+
+  function handleForgot(e, role) {
+    e.preventDefault();
+    alert('Password reset link will be sent to your registered ' + role + ' email/mobile.');
+  }
+
+  setupPasswordValidation('p');
+  setupPasswordValidation('l');
+</script>
+</body>
+</html>
